@@ -12,7 +12,7 @@
 #include <linux/i2c-dev.h>
 
 #include "cando_base/rpi_stereo_driver.hpp"
-
+ 
 namespace rpi_stereo_cam
 {
 
@@ -85,6 +85,7 @@ namespace rpi_stereo_cam
     for(int i = 0 ; i < io_count ; i++){
       pinMode (arducam_adapter_board[0].gpios[i].gpio, OUTPUT);
     }
+    return 0;
   }
 
   int  RpiStereoCamDriver::camera_detect()
@@ -92,7 +93,7 @@ namespace rpi_stereo_cam
      int i = 0;
      uint16_t sensorID = 0;
      
-     for(i = 0; i< sizeof(arducam_sensor_list)/sizeof(arducam_sensor_list[0]); i++)
+     for(i = 0; i< (int)(sizeof(arducam_sensor_list)/sizeof(arducam_sensor_list[0])); i++)
      {
          sensorID = 0;
          i2c_state.chip_address =arducam_sensor_list[i]. slave_id;
@@ -121,9 +122,9 @@ namespace rpi_stereo_cam
 
     sleep(0.1);
 
-    char ch_count = sizeof(arducam_adapter_board)/sizeof(arducam_adapter_board[0]);
+    int ch_count = sizeof(arducam_adapter_board)/sizeof(arducam_adapter_board[0]);
 
-    for(char ch_id = 0; ch_id < ch_count;ch_id++)
+    for(int ch_id = 0; ch_id < ch_count;ch_id++)
     {  
       i2c = arducam_adapter_board[ch_id].i2c_command;
       system(i2c);
@@ -165,7 +166,7 @@ namespace rpi_stereo_cam
 
   int RpiStereoCamDriver::i2c_read_reg(I2C_RW_STATE *state)
   {
-    uint16_t val = 0;
+    //uint16_t val = 0;
     int err;
     uint8_t buf[2];
     uint8_t data[1];
