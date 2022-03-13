@@ -1,4 +1,7 @@
 # cando
+- ROS2 Galactic
+
+# On RaspberryPI
 ```shell
 git clone https://github.com/Miragecore/cando.git
 cd cando
