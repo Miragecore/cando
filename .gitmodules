@@ -5,3 +5,7 @@
 [submodule "src/ros2_shared"]
 	path = src/ros2_shared
 	url = https://github.com/ptrmu/ros2_shared.git
+[submodule "src/image_pipeline"]
+	path = src/image_pipeline
+	url = http://github.com/ros-perception/image_pipeline.git
+	branch = ros2
