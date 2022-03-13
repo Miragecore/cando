@@ -102,6 +102,23 @@ ament_target_dependencies(
 rclcpp_components_register_nodes(subscriber_node "rpi_stereo_cam::ImageSubscriberNode")
 set(node_plugins "${node_plugins}rpi_stereo_cam::ImageSubscriberNode;$<TARGET_FILE:subscriber_node>\n")
 
+#=============
+# OpenCV camera main, IPC=true
+#=============
+
+add_executable(
+  rpi_stereo_main
+  src/rpi_stereo_main.cpp
+)
+target_link_libraries(
+  rpi_stereo_main
+  rpi_stereo_node
+)
+ament_target_dependencies(
+  rpi_stereo_main
+  rclcpp
+)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
@@ -147,4 +164,10 @@ install(
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
+)
+
+# Install executables
+install(
+  TARGETS rpi_stereo_main
+  DESTINATION lib/${PROJECT_NAME}
 )
