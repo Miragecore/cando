@@ -113,13 +113,13 @@ namespace rpi_stereo_cam
                                                     lcamera_info_msg_)) {
       RCLCPP_INFO(get_logger(), "got camera info for '%s'", camera_name.c_str());
       lcamera_info_msg_.header.frame_id = cxt_.lcamera_frame_id_;
-      lcamera_info_pub_ = create_publisher<sensor_msgs::msg::CameraInfo>("lcamera_info", 10);
+      lcamera_info_pub_ = create_publisher<sensor_msgs::msg::CameraInfo>("left/camera_info", 10);
     } else {
       RCLCPP_ERROR(get_logger(), "cannot get camera info, will not publish");
       lcamera_info_pub_ = nullptr;
     }
 
-    lcam_image_pub_ = create_publisher<sensor_msgs::msg::Image>("left_image_raw", 10);
+    lcam_image_pub_ = create_publisher<sensor_msgs::msg::Image>("left/image_rect", 10);
 
     assert(!cxt_.rcamera_info_path_.empty()); // readCalibration will crash if file_name is ""
     if (camera_calibration_parsers::readCalibration(cxt_.rcamera_info_path_, 
@@ -127,13 +127,13 @@ namespace rpi_stereo_cam
                                                     rcamera_info_msg_)) {
       RCLCPP_INFO(get_logger(), "got camera info for '%s'", camera_name.c_str());
       rcamera_info_msg_.header.frame_id = cxt_.rcamera_frame_id_;
-      rcamera_info_pub_ = create_publisher<sensor_msgs::msg::CameraInfo>("rcamera_info", 10);
+      rcamera_info_pub_ = create_publisher<sensor_msgs::msg::CameraInfo>("right/camera_info", 10);
     } else {
       RCLCPP_ERROR(get_logger(), "cannot get camera info, will not publish");
       rcamera_info_pub_ = nullptr;
     }
 
-    rcam_image_pub_ = create_publisher<sensor_msgs::msg::Image>("right_image_raw", 10);
+    rcam_image_pub_ = create_publisher<sensor_msgs::msg::Image>("right/image_rect", 10);
 
     // Run loop on it's own thread
     thread_ = std::thread(std::bind(&RpiStereoCamNode::loop, this));
