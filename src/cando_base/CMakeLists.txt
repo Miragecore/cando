@@ -29,6 +29,9 @@ find_package(ros2_shared REQUIRED)
 find_package(camera_calibration_parsers REQUIRED)
 find_package(class_loader REQUIRED)
 find_package(rclcpp_components REQUIRED)
+find_package(image_geometry REQUIRED)
+find_package(image_pipeline REQUIRED)
+find_package(image_common REQUIRED)
 
 set(WIRINGPI
   -lwiringPi
@@ -75,6 +78,7 @@ ament_target_dependencies(
   camera_calibration_parsers 
   ros2_shared 
   class_loader
+	image_geometry
 )
 
 rclcpp_components_register_nodes(rpi_stereo_node "rpi_stereo_cam::RpiStereoCamNode")

@@ -8,6 +8,7 @@
 
 #include "cando_base/rpi_stereo_driver.hpp"
 #include "cando_base/rpi_stereo_cam_context.hpp"
+#include <image_geometry/stereo_camera_model.h>
 
 namespace rpi_stereo_cam 
 {
@@ -18,6 +19,8 @@ namespace rpi_stereo_cam
 
     std::thread thread_;
     std::atomic<bool> canceled_;
+
+		image_geometry::StereoCameraModel cam_model_;
 
     //std::shared_ptr<cv::VideoCapture> capture_;
     std::shared_ptr<RpiStereoCamDriver> stereo_cam_;

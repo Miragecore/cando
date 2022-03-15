@@ -133,6 +133,8 @@ namespace rpi_stereo_cam
       rcamera_info_pub_ = nullptr;
     }
 
+		cam_model_.fromCameraInfo(lcamera_info_msg_, rcamera_info_msg_);
+
     rcam_image_pub_ = create_publisher<sensor_msgs::msg::Image>("right/image_rect", 10);
 
     // Run loop on it's own thread
@@ -156,6 +158,7 @@ namespace rpi_stereo_cam
   void RpiStereoCamNode::loop()
   {
     cv::Mat rframe, lframe;
+		cv::Mat rect_r, rect_l;
 
     while (rclcpp::ok() && !canceled_.load()) {
       // Read a frame, if this is a device block until a frame is available
@@ -164,6 +167,9 @@ namespace rpi_stereo_cam
       auto lstamp = now();
       stereo_cam_->read_right(rframe);
       auto rstamp = now();
+
+			cam_model_.right().rectifyImage(rframe, rect_r);
+			cam_model_.left().rectifyImage(lframe, rect_l);
       /*
       if (!capture_->read(frame)) {
         RCLCPP_INFO(get_logger(), "EOF, stop publishing");
@@ -179,12 +185,12 @@ namespace rpi_stereo_cam
       // Convert OpenCV Mat to ROS Image
       limage_msg->header.stamp = lstamp;
       limage_msg->header.frame_id = cxt_.lcamera_frame_id_;
-      limage_msg->height = lframe.rows;
-      limage_msg->width = lframe.cols;
-      limage_msg->encoding = mat_type2encoding(lframe.type());
+      limage_msg->height = rect_l.rows;
+      limage_msg->width = rect_l.cols;
+      limage_msg->encoding = mat_type2encoding(rect_l.type());
       limage_msg->is_bigendian = false;
-      limage_msg->step = static_cast<sensor_msgs::msg::Image::_step_type>(lframe.step);
-      limage_msg->data.assign(lframe.datastart, lframe.dataend);
+      limage_msg->step = static_cast<sensor_msgs::msg::Image::_step_type>(rect_l.step);
+      limage_msg->data.assign(rect_l.datastart, rect_l.dataend);
 
       // Avoid copying image message if possible
       sensor_msgs::msg::Image::UniquePtr rimage_msg(new sensor_msgs::msg::Image());
@@ -192,12 +198,12 @@ namespace rpi_stereo_cam
       // Convert OpenCV Mat to ROS Image
       rimage_msg->header.stamp = rstamp;
       rimage_msg->header.frame_id = cxt_.rcamera_frame_id_;
-      rimage_msg->height = rframe.rows;
-      rimage_msg->width = rframe.cols;
-      rimage_msg->encoding = mat_type2encoding(rframe.type());
+      rimage_msg->height = rect_r.rows;
+      rimage_msg->width = rect_r.cols;
+      rimage_msg->encoding = mat_type2encoding(rect_r.type());
       rimage_msg->is_bigendian = false;
-      rimage_msg->step = static_cast<sensor_msgs::msg::Image::_step_type>(rframe.step);
-      rimage_msg->data.assign(rframe.datastart, rframe.dataend);
+      rimage_msg->step = static_cast<sensor_msgs::msg::Image::_step_type>(rect_r.step);
+      rimage_msg->data.assign(rect_r.datastart, rect_r.dataend);
 #undef SHOW_ADDRESS
 #ifdef SHOW_ADDRESS
       static int count = 0;
@@ -205,12 +211,15 @@ namespace rpi_stereo_cam
       RCLCPP_INFO(get_logger(), "%d, %p", count++, reinterpret_cast<std::uintptr_t>(rimage_msg.get()));
 #endif
 
+
       // Publish
       lcam_image_pub_->publish(std::move(limage_msg));
       if (lcamera_info_pub_) {
         lcamera_info_msg_.header.stamp = lstamp;
         lcamera_info_pub_->publish(lcamera_info_msg_);
       }
+
+
 
       // Publish
       rcam_image_pub_->publish(std::move(rimage_msg));
