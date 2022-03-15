@@ -127,7 +127,7 @@ namespace rpi_stereo_cam
                                                     rcamera_info_msg_)) {
       RCLCPP_INFO(get_logger(), "got camera info for '%s'", camera_name.c_str());
       rcamera_info_msg_.header.frame_id = cxt_.rcamera_frame_id_;
-      rcamera_info_pub_ = create_publisher<sensor_msgs::msg::CameraInfo>("lcamera_info", 10);
+      rcamera_info_pub_ = create_publisher<sensor_msgs::msg::CameraInfo>("rcamera_info", 10);
     } else {
       RCLCPP_ERROR(get_logger(), "cannot get camera info, will not publish");
       rcamera_info_pub_ = nullptr;
