@@ -110,30 +110,32 @@ namespace rpi_stereo_cam
     std::string camera_name;
     if (camera_calibration_parsers::readCalibration(cxt_.lcamera_info_path_, 
                                                     camera_name,
-                                                    lcamera_info_msg_)) {
+                                                    left_info_msg_)) {
       RCLCPP_INFO(get_logger(), "got camera info for '%s'", camera_name.c_str());
-      lcamera_info_msg_.header.frame_id = cxt_.lcamera_frame_id_;
+      left_info_msg_.header.frame_id = cxt_.lcamera_frame_id_;
       lcamera_info_pub_ = create_publisher<sensor_msgs::msg::CameraInfo>("left/camera_info", 10);
     } else {
       RCLCPP_ERROR(get_logger(), "cannot get camera info, will not publish");
       lcamera_info_pub_ = nullptr;
     }
 
-    lcam_image_pub_ = create_publisher<sensor_msgs::msg::Image>("left/image_rect", 10);
+    left_raw_pub_ = create_publisher<sensor_msgs::msg::Image>("left/image_rect", 10);
 
     assert(!cxt_.rcamera_info_path_.empty()); // readCalibration will crash if file_name is ""
     if (camera_calibration_parsers::readCalibration(cxt_.rcamera_info_path_, 
                                                     camera_name,
-                                                    rcamera_info_msg_)) {
+                                                    right_info_msg_)) {
       RCLCPP_INFO(get_logger(), "got camera info for '%s'", camera_name.c_str());
-      rcamera_info_msg_.header.frame_id = cxt_.rcamera_frame_id_;
+      right_info_msg_.header.frame_id = cxt_.rcamera_frame_id_;
       rcamera_info_pub_ = create_publisher<sensor_msgs::msg::CameraInfo>("right/camera_info", 10);
     } else {
       RCLCPP_ERROR(get_logger(), "cannot get camera info, will not publish");
       rcamera_info_pub_ = nullptr;
     }
 
-    rcam_image_pub_ = create_publisher<sensor_msgs::msg::Image>("right/image_rect", 10);
+		cam_model_.fromCameraInfo(left_info_msg_, right_info_msg_);
+
+    right_raw_pub_ = create_publisher<sensor_msgs::msg::Image>("right/image_rect", 10);
 
     // Run loop on it's own thread
     thread_ = std::thread(std::bind(&RpiStereoCamNode::loop, this));
@@ -156,14 +158,18 @@ namespace rpi_stereo_cam
   void RpiStereoCamNode::loop()
   {
     cv::Mat rframe, lframe;
+		cv::Mat rect_r, rect_l;
 
     while (rclcpp::ok() && !canceled_.load()) {
       // Read a frame, if this is a device block until a frame is available
 
       stereo_cam_->read_left(lframe);
-      auto lstamp = now();
+      auto left_raw_stamp = now();
       stereo_cam_->read_right(rframe);
-      auto rstamp = now();
+      auto right_raw_stamp = now();
+
+			//cam_model_.right().rectifyImage(rframe, rect_r);
+			//cam_model_.left().rectifyImage(lframe, rect_l);
       /*
       if (!capture_->read(frame)) {
         RCLCPP_INFO(get_logger(), "EOF, stop publishing");
@@ -174,49 +180,52 @@ namespace rpi_stereo_cam
       //auto stamp = now();
 
       // Avoid copying image message if possible
-      sensor_msgs::msg::Image::UniquePtr limage_msg(new sensor_msgs::msg::Image());
+      sensor_msgs::msg::Image::UniquePtr left_image_raw_msg(new sensor_msgs::msg::Image());
 
       // Convert OpenCV Mat to ROS Image
-      limage_msg->header.stamp = lstamp;
-      limage_msg->header.frame_id = cxt_.lcamera_frame_id_;
-      limage_msg->height = lframe.rows;
-      limage_msg->width = lframe.cols;
-      limage_msg->encoding = mat_type2encoding(lframe.type());
-      limage_msg->is_bigendian = false;
-      limage_msg->step = static_cast<sensor_msgs::msg::Image::_step_type>(lframe.step);
-      limage_msg->data.assign(lframe.datastart, lframe.dataend);
+      left_image_raw_msg->header.stamp = left_raw_stamp;
+      left_image_raw_msg->header.frame_id = cxt_.lcamera_frame_id_;
+      left_image_raw_msg->height = lframe.rows;
+      left_image_raw_msg->width = lframe.cols;
+      left_image_raw_msg->encoding = mat_type2encoding(lframe.type());
+      left_image_raw_msg->is_bigendian = false;
+      left_image_raw_msg->step = static_cast<sensor_msgs::msg::Image::_step_type>(lframe.step);
+      left_image_raw_msg->data.assign(lframe.datastart, lframe.dataend);
 
       // Avoid copying image message if possible
-      sensor_msgs::msg::Image::UniquePtr rimage_msg(new sensor_msgs::msg::Image());
+      sensor_msgs::msg::Image::UniquePtr right_image_raw_msg(new sensor_msgs::msg::Image());
 
       // Convert OpenCV Mat to ROS Image
-      rimage_msg->header.stamp = rstamp;
-      rimage_msg->header.frame_id = cxt_.rcamera_frame_id_;
-      rimage_msg->height = rframe.rows;
-      rimage_msg->width = rframe.cols;
-      rimage_msg->encoding = mat_type2encoding(rframe.type());
-      rimage_msg->is_bigendian = false;
-      rimage_msg->step = static_cast<sensor_msgs::msg::Image::_step_type>(rframe.step);
-      rimage_msg->data.assign(rframe.datastart, rframe.dataend);
+      right_image_raw_msg->header.stamp = right_raw_stamp;
+      right_image_raw_msg->header.frame_id = cxt_.rcamera_frame_id_;
+      right_image_raw_msg->height = rframe.rows;
+      right_image_raw_msg->width = rframe.cols;
+      right_image_raw_msg->encoding = mat_type2encoding(rframe.type());
+      right_image_raw_msg->is_bigendian = false;
+      right_image_raw_msg->step = static_cast<sensor_msgs::msg::Image::_step_type>(rframe.step);
+      right_image_raw_msg->data.assign(rframe.datastart, rframe.dataend);
 #undef SHOW_ADDRESS
 #ifdef SHOW_ADDRESS
       static int count = 0;
-      RCLCPP_INFO(get_logger(), "%d, %p", count++, reinterpret_cast<std::uintptr_t>(limage_msg.get()));
-      RCLCPP_INFO(get_logger(), "%d, %p", count++, reinterpret_cast<std::uintptr_t>(rimage_msg.get()));
+      RCLCPP_INFO(get_logger(), "%d, %p", count++, reinterpret_cast<std::uintptr_t>(left_image_raw_msg.get()));
+      RCLCPP_INFO(get_logger(), "%d, %p", count++, reinterpret_cast<std::uintptr_t>(right_image_raw_msg.get()));
 #endif
 
-      // Publish
-      lcam_image_pub_->publish(std::move(limage_msg));
-      if (lcamera_info_pub_) {
-        lcamera_info_msg_.header.stamp = lstamp;
-        lcamera_info_pub_->publish(lcamera_info_msg_);
-      }
 
       // Publish
-      rcam_image_pub_->publish(std::move(rimage_msg));
+      left_raw_pub_->publish(std::move(left_image_raw_msg));
+      if (lcamera_info_pub_) {
+        left_info_msg_.header.stamp = left_raw_stamp;
+        lcamera_info_pub_->publish(left_info_msg_);
+      }
+
+
+
+      // Publish
+      right_raw_pub_->publish(std::move(right_image_raw_msg));
       if (rcamera_info_pub_) {
-        rcamera_info_msg_.header.stamp = rstamp;
-        rcamera_info_pub_->publish(rcamera_info_msg_);
+        right_info_msg_.header.stamp = right_raw_stamp;
+        rcamera_info_pub_->publish(right_info_msg_);
       }
       // Sleep if required
       // not support file

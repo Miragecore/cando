@@ -10,15 +10,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# Emulate colcon by providing paths to other projects in the workspace
-if ($ENV{CLION_IDE})
-  message(STATUS "Running inside CLion")
-  find_package(fastrtps_cmake_module REQUIRED)
-  set(FastRTPS_INCLUDE_DIR "/opt/ros/galactic/include")
-  set(FastRTPS_LIBRARY_RELEASE "/opt/ros/galactic/lib/libfastrtps.so")
-  set(ros2_shared_DIR "${PROJECT_SOURCE_DIR}/../../../install/ros2_shared/share/ros2_shared/cmake")
-endif ()
-
+set(ros2_shared_DIR "${PROJECT_SOURCE_DIR}/../../install/ros2_shared/share/ros2_shared/cmake")
 # find dependencies
 find_package(ament_cmake REQUIRED)
 # uncomment the following section in order to fill in
@@ -29,6 +21,9 @@ find_package(ros2_shared REQUIRED)
 find_package(camera_calibration_parsers REQUIRED)
 find_package(class_loader REQUIRED)
 find_package(rclcpp_components REQUIRED)
+find_package(image_geometry REQUIRED)
+find_package(image_pipeline REQUIRED)
+find_package(image_common REQUIRED)
 
 set(WIRINGPI
   -lwiringPi
@@ -75,6 +70,7 @@ ament_target_dependencies(
   camera_calibration_parsers 
   ros2_shared 
   class_loader
+	image_geometry
 )
 
 rclcpp_components_register_nodes(rpi_stereo_node "rpi_stereo_cam::RpiStereoCamNode")
