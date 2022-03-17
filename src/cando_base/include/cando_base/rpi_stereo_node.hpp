@@ -25,16 +25,18 @@ namespace rpi_stereo_cam
     //std::shared_ptr<cv::VideoCapture> capture_;
     std::shared_ptr<RpiStereoCamDriver> stereo_cam_;
     //sensor_msgs::msg::CameraInfo camera_info_msg_;
-    sensor_msgs::msg::CameraInfo right_info_msg_;//rcamera_info_msg_;
-    sensor_msgs::msg::CameraInfo left_info_msg_;//lcamera_info_msg_;
+    sensor_msgs::msg::CameraInfo rcam_info_msg_;//rcamera_info_msg_;
+    sensor_msgs::msg::CameraInfo lcam_info_msg_;//lcamera_info_msg_;
 
     int publish_fps_;
     //rclcpp::Time next_stamp_;
 
     //rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_;
     //rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_pub_;
-    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr right_raw_pub_;//rcam_image_pub_;
-    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr left_raw_pub_;//lcam_image_pub_;
+    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr r_raw_pub_;//rcam_image_pub_;
+    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr l_raw_pub_;//rcam_image_pub_;
+    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr r_rect_pub_;//lcam_image_pub_;
+    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr l_rect_pub_;//lcam_image_pub_;
     rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr rcamera_info_pub_;
     rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr lcamera_info_pub_;
 
@@ -47,6 +49,8 @@ namespace rpi_stereo_cam
   private:
 
     void validate_parameters();
+
+    sensor_msgs::msg::Image* make_msg(rclcpp::Time stamp, std::string id, cv::Mat &frame);
 
     void loop();
   };
