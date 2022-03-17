@@ -33,6 +33,6 @@ jobs:
       - name: build and test
         uses: ros-tooling/action-ros-ci@master
         with:
-          package-name: opencv_cam
+          package-name: cando
           target-ros2-distro: ${{ matrix.ros_distribution }}
           vcs-repo-file-url: "https://raw.githubusercontent.com/${{github.repository}}/${{github.sha}}/workspace.repos"
