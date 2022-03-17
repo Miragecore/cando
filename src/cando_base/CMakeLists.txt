@@ -10,7 +10,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-set(ros2_shared_DIR "${PROJECT_SOURCE_DIR}/../../install/ros2_shared/share/ros2_shared/cmake")
+set(ros2_shared_DIR "${PROJECT_SOURCE_DIR}/../../../install/ros2_shared/share/ros2_shared/cmake")
 # find dependencies
 find_package(ament_cmake REQUIRED)
 # uncomment the following section in order to fill in
