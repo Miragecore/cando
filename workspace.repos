@@ -1,0 +1,9 @@
+repositories:
+  cando:
+    type: git
+    url: https://github.com/Miragecore/cando
+    version: main
+  ros2_shared:
+    type: git
+    url: https://github.com/ptrmu/ros2_shared
+    version: master
