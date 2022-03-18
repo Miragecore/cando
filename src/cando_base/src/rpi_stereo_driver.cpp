@@ -148,8 +148,12 @@ namespace rpi_stereo_cam
             return -1;
         } 
 
+				cap.set(cv::CAP_PROP_FRAME_WIDTH, 640);
+				cap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
+				
+
         cap.grab();
-        //system("v4l2-ctl -c exposure_time_absolute=500");
+        system("v4l2-ctl -c exposure_time_absolute=500");
         //arducam_adapter_board[ch_id].camera_exist = 1;
         ret ++;
         sleep(1);
