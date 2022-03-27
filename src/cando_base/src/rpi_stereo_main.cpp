@@ -2,6 +2,12 @@
 
 // Launch RpiStereoCamNode with use_intra_process_comms=true
 
+void quit(int sig)
+{
+				(void)sig;
+				rclcpp::shutdown();
+}
+
 int main(int argc, char **argv)
 {
   // Force flush of the stdout buffer
@@ -9,6 +15,8 @@ int main(int argc, char **argv)
 
   // Init ROS
   rclcpp::init(argc, argv);
+
+	signal(SIGINT, quit);
 
   // Create single-threaded executor
   rclcpp::executors::SingleThreadedExecutor executor;

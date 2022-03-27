@@ -116,11 +116,11 @@ namespace rpi_stereo_cam
       RCLCPP_INFO(get_logger(), "got camera info for '%s'", camera_name.c_str());
       lcam_info_msg_.header.frame_id = cxt_.lcamera_frame_id_;
       lcamera_info_pub_ = create_publisher<sensor_msgs::msg::CameraInfo>("left/camera_info", 10);
-      l_rect_pub_ = create_publisher<sensor_msgs::msg::Image>("left/image_rect", 10);
+     // l_rect_pub_ = create_publisher<sensor_msgs::msg::Image>("left/image_rect", 10);
     } else {
       RCLCPP_ERROR(get_logger(), "cannot get camera info, will not publish");
       lcamera_info_pub_ = nullptr;
-			l_rect_pub_ = nullptr;
+			//l_rect_pub_ = nullptr;
     }
 
     l_raw_pub_ = create_publisher<sensor_msgs::msg::Image>("left/image_raw", 10);
@@ -132,14 +132,12 @@ namespace rpi_stereo_cam
       RCLCPP_INFO(get_logger(), "got camera info for '%s'", camera_name.c_str());
       rcam_info_msg_.header.frame_id = cxt_.rcamera_frame_id_;
       rcamera_info_pub_ = create_publisher<sensor_msgs::msg::CameraInfo>("right/camera_info", 10);
-      r_rect_pub_ = create_publisher<sensor_msgs::msg::Image>("right/image_rect", 10);
+      //r_rect_pub_ = create_publisher<sensor_msgs::msg::Image>("right/image_rect", 10);
     } else {
       RCLCPP_ERROR(get_logger(), "cannot get camera info, will not publish");
       rcamera_info_pub_ = nullptr;
-			r_rect_pub_ = nullptr;
+			//r_rect_pub_ = nullptr;
     }
-
-		cam_model_.fromCameraInfo(lcam_info_msg_, rcam_info_msg_);
 
     r_raw_pub_ = create_publisher<sensor_msgs::msg::Image>("right/image_raw", 10);
 
@@ -189,10 +187,16 @@ namespace rpi_stereo_cam
       // Read a frame, if this is a device block until a frame is available
 
       stereo_cam_->read_left(lframe);
-      auto l_stamp = now();
-      stereo_cam_->read_right(rframe);
-      auto r_stamp = now();
+      //auto l_stamp = now();
 
+      stereo_cam_->read_right(rframe);
+      //auto r_stamp = now();
+
+			auto stamp = now();
+
+		  //cam_model_.fromCameraInfo(lcam_info_msg_, rcam_info_msg_);
+			//cam_model_.left().rectifyImage(lframe, l_rect);
+			//cam_model_.right().rectifyImage(rframe, r_rect);
       /*
       if (!capture_->read(frame)) {
         RCLCPP_INFO(get_logger(), "EOF, stop publishing");
@@ -204,10 +208,9 @@ namespace rpi_stereo_cam
 
       // Avoid copying image message if possible
       //sensor_msgs::msg::Image::UniquePtr l_img_raw_msg(new sensor_msgs::msg::Image());
-      sensor_msgs::msg::Image::UniquePtr l_img_raw_msg(make_msg(l_stamp,
+      sensor_msgs::msg::Image::UniquePtr l_img_raw_msg(make_msg(stamp,
                                                                  cxt_.lcamera_frame_id_,
-                                                                 lframe));
-      
+                                                             lframe)); //   lframe));
 
       // Convert OpenCV Mat to ROS Image
       /*
@@ -223,9 +226,9 @@ namespace rpi_stereo_cam
 
       // Avoid copying image message if possible
       //sensor_msgs::msg::Image::UniquePtr r_img_raw_msg(new sensor_msgs::msg::Image());
-      sensor_msgs::msg::Image::UniquePtr r_img_raw_msg(make_msg(l_stamp,
+      sensor_msgs::msg::Image::UniquePtr r_img_raw_msg(make_msg(stamp,
                                                                 cxt_.rcamera_frame_id_,
-                                                                rframe));
+                                                              rframe)); // rframe));
       
 
       // Convert OpenCV Mat to ROS Image
@@ -247,18 +250,12 @@ namespace rpi_stereo_cam
       RCLCPP_INFO(get_logger(), "%d, %p", count++, 
                                 reinterpret_cast<std::uintptr_t>(r_img_raw_msg.get()));
 #endif
-			if(l_rect_pub_) 
-		  	cam_model_.left().rectifyImage(lframe, l_rect);
-			
-			if(r_rect_pub_) 
-			  cam_model_.right().rectifyImage(rframe, r_rect);
-			
 
       // Publish
       l_raw_pub_->publish(std::move(l_img_raw_msg));
 
       if (lcamera_info_pub_) {
-        lcam_info_msg_.header.stamp = l_stamp;
+        lcam_info_msg_.header.stamp = stamp;
         lcamera_info_pub_->publish(lcam_info_msg_);
       }
 
@@ -266,23 +263,9 @@ namespace rpi_stereo_cam
       r_raw_pub_->publish(std::move(r_img_raw_msg));
 
       if (rcamera_info_pub_) {
-        rcam_info_msg_.header.stamp = r_stamp;
+        rcam_info_msg_.header.stamp = stamp;
         rcamera_info_pub_->publish(rcam_info_msg_);
       }
-
-			if(l_rect_pub_) {
-        sensor_msgs::msg::Image::UniquePtr l_img_rect_msg(make_msg(l_stamp,
-                                                                   cxt_.lcamera_frame_id_,
-                                                                   l_rect));
-        l_rect_pub_->publish(std::move(l_img_rect_msg));
-			}
-
-			if(r_rect_pub_) {
-        sensor_msgs::msg::Image::UniquePtr r_img_rect_msg(make_msg(r_stamp,
-                                                                    cxt_.rcamera_frame_id_,
-                                                                    r_rect));
-        r_rect_pub_->publish(std::move(r_img_rect_msg));
-			}
 
       // Sleep if required
       // not support file

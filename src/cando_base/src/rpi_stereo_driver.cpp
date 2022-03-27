@@ -66,12 +66,16 @@ namespace rpi_stereo_cam
     choose_channel(LEFT_CAM);
     capture_.grab();
     capture_.grab();
+    capture_.grab();
+    capture_.grab();
     capture_.read(left_);
   }
 
   void RpiStereoCamDriver::read_right(cv::OutputArray right_)
   {
     choose_channel(RIGHT_CAM);
+    capture_.grab();
+    capture_.grab();
     capture_.grab();
     capture_.grab();
     capture_.read(right_);

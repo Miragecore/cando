@@ -13,9 +13,9 @@ namespace rpi_stereo_cam
   /* CXT_MACRO_MEMBER(width, int, 0)                                  Device width */ \
   /* CXT_MACRO_MEMBER(height, int, 0)                                 Device height */ \
   \
-  CXT_MACRO_MEMBER(lcamera_info_path, std::string, "lcamera_info.ini")     /* leftCamera info path */ \
+  CXT_MACRO_MEMBER(lcamera_info_path, std::string, "left.yaml")     /* leftCamera info path */ \
   CXT_MACRO_MEMBER(lcamera_frame_id, std::string, "lcamera_frame")  /* leftCamera frame id */ \
-  CXT_MACRO_MEMBER(rcamera_info_path, std::string, "rcamera_info.ini")     /* RightCamera info path */ \
+  CXT_MACRO_MEMBER(rcamera_info_path, std::string, "right.yaml")     /* RightCamera info path */ \
   CXT_MACRO_MEMBER(rcamera_frame_id, std::string, "rcamera_frame")  /* RightCamera frame id */ \
 /* End of list */
 
