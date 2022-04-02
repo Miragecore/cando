@@ -1,0 +1,5 @@
+repositories:
+  cando:
+    type: git
+    url: https://github.com/Miragecore/cando
+    version: main
