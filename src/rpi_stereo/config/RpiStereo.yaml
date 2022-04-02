@@ -1,0 +1,16 @@
+/RpiStereo:
+  ros__parameters:
+    l_camera_info_file: ./left.yaml
+    l_frame_id: l_camera
+    publish_rate: 10.0
+    qos_overrides:
+      /parameter_events:
+        publisher:
+          depth: 1000
+          durability: volatile
+          history: keep_last
+          reliability: reliable
+    r_camera_info_file: ./right.yaml
+    r_frame_id: r_camera
+    rectify: false
+    use_sim_time: false

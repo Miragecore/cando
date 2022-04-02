@@ -5,8 +5,8 @@
 
 namespace rpi_stereo_cam
 {
-  const int LEFT_CAM = 2;
-  const int RIGHT_CAM = 0;
+  const int LEFT_CAM = 0;
+  const int RIGHT_CAM = 2;
 
   typedef struct{
       int device_handle;

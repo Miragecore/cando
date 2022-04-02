@@ -11,7 +11,7 @@
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
 
-#include "cando_base/rpi_stereo_driver.hpp"
+#include "rpi_stereo/rpi_stereo_driver.hpp"
  
 namespace rpi_stereo_cam
 {
