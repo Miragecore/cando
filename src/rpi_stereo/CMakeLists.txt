@@ -69,7 +69,7 @@ ament_target_dependencies(rpi_stereo_node
   ${DEPENDENCIES})
 
 install(TARGETS rpi_stereo_node
-        DESTINATION lib
+        DESTINATION lib/${PROJECT_NAME}
 )
 install(TARGETS rpi_stereo
         DESTINATION lib
@@ -78,10 +78,10 @@ install(TARGETS rpi_stereo
         DESTINATION bin
 )
 install(DIRECTORY config
-				DESTINATION share
+				DESTINATION share/${PROJECT_NAME}
 )
 install(DIRECTORY launch
-  DESTINATION share
+  DESTINATION share/${PROJECT_NAME}
 )
 
 

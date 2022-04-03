@@ -11,11 +11,43 @@ import easydict
 import torch.nn as nn
 import torch.nn.parallel
 
+import cv2
 from cv_bridge import CvBridge, CvBridgeError
 
 from .Anynet.models.anynet import AnyNet
 
 class AnyNetDisparity(Node):
+
+  def __init__(self):
+    super().__init__('anynet_disparity')
+
+    args = easydict.EasyDict({"init_channels": 1 , 
+                      "maxdisplist": [12,3,3],  
+                      "spn_init_channels" : 8,
+                      "nblocks" : 2,
+                      "layers_3d" : 4,
+                      "channels_3d" : 4,
+                      "growth_rate" : [4,1,1],
+                      "with_spn" : False})
+
+    self.declare_parameter('pretrained', 'config/checkpoint/kitti2015/checkpoint.tar')
+    self.pretrained = self.get_parameter('pretrained').value
+    self.add_on_set_parameters_callback(self.parameters_callback)
+
+    self.model = AnyNet(args)
+    checkpoint = torch.load(self.pretrained, map_location=torch.device('cpu'))
+    self.model.load_state_dict(checkpoint['state_dict'], strict=False)
+
+    self.bridge = CvBridge()
+
+    self.publisher_ = self.create_publisher(Image, "/disparity" ,10)
+
+    left_rect_sub = message_filters.Subscriber(self, Image, "/left/image_rect")
+    right_rect_sub = message_filters.Subscriber(self, Image, "/right/image_rect")
+
+    ts = message_filters.ApproximateTimeSynchronizer([left_rect_sub, right_rect_sub], 10, 0.1, allow_headerless=True)
+
+    ts.registerCallback(self.callback)
 
   def callback(left, right):
     try:
@@ -33,34 +65,26 @@ class AnyNetDisparity(Node):
 
     self.publisher_.publish(result)
 
-  def __init__(self):
-    super().__init__('anynet_disparity')
-
-    args = easydict.EasyDict({"init_channels": 1 , 
-                      "maxdisplist": [12,3,3],  
-                      "spn_init_channels" : 8,
-                      "nblocks" : 2,
-                      "layers_3d" : 4,
-                      "channels_3d" : 4,
-                      "growth_rate" : [4,1,1],
-                      "with_spn" : False,
-                      "pretrained" : "config/checkpoint/kitti2015_ck/checkpoint.tar"})
-
-    self.model = AnyNet(args)
-    checkpoint = torch.load(args.pretrained, map_location=torch.device('cpu'))
-    self.model.load_state_dict(checkpoint['state_dict'], strict=False)
-
-    self.bridge = CvBridge()
-
-    self.publisher_ = self.create_publisher(Image, "/disparity" ,10)
-
-    left_rect_sub = message_filters.Subscriber(self, Image, "/left_rect")
-    right_rect_sub = message_filters.Subscriber(self, Image, "/right_rect")
-
-    ts = message_filters.ApproximateTimeSynchronizer([left_rect_sub, right_rect_sub], 10, 0.1, allow_headerless=True)
-
-    ts.registerCallback(self.callback)
-
+  def parameters_callback(self, params):
+    success = False
+    for param in params:
+      if param.name == "pretrained":
+        if param.type_ == Parameter.Type.STRING:
+          self.pretrained = param.value
+          checkpoint = torch.load(self.pretrained, map_location=torch.device('cpu'))
+          self.model.load_state_dict(checkpoint['state_dict'], strict=False)
+    return SetParametersResult(successful=success)
+'''
+        if param.name == "battery_percentage_warning":
+            if param.type_ in [Parameter.Type.DOUBLE, Parameter.Type.INTEGER]:
+                if param.value >= 0.0 and param.value < 100.0:
+                    success = True
+                    self.battery_percentage_warning_ = param.value
+        if param.name == "simulation_mode":
+            if param.type_ == Parameter.Type.BOOL:
+                success = True
+                self.simulation_mode_ = param.value
+'''
 
 def main(args=None):
   rclpy.init(args=args)

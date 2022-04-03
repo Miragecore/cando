@@ -1,11 +1,4 @@
-[submodule "src/image_common"]
-	path = src/image_common
-	url = https://github.com/ros-perception/image_common.git
-  branch = galactic
-[submodule "src/ros2_shared"]
-	path = src/ros2_shared
-	url = https://github.com/ptrmu/ros2_shared.git
-[submodule "src/image_pipeline"]
-	path = src/image_pipeline
-	url = http://github.com/ros-perception/image_pipeline.git
-	branch = ros2
+[submodule "src/anynet_disparity/anynet_disparity/AnyNet"]
+	path = src/anynet_disparity/anynet_disparity/AnyNet
+	url = https://github.com/Miragecore/AnyNet.git
+	branch = devel

@@ -12,6 +12,7 @@
 	<exec_depend>sensor_msgs></exec_depend>
 	<exec_depend>EasyDict</exec_depend>
 	<exec_depend>message_filters</exec_depend>
+	<exec_depend>ros2launch</exec_depend>
 	<depend>torch</depend>
 
   <test_depend>ament_copyright</test_depend>
