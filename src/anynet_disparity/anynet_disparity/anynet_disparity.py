@@ -5,7 +5,6 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import String
 
 import easydict
-#import torchvision.transforms as transforms
 import numpy as np
 import easydict
 import torch.nn as nn

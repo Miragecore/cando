@@ -5,6 +5,7 @@ from pathlib import Path
 
 package_name = 'anynet_disparity'
 
+
 def glob_fix(package_name, glob):
     # this assumes setup.py lives in the folder that contains the package
     package_path = Path(f'./{package_name}').resolve()
