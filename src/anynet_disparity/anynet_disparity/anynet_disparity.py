@@ -14,7 +14,7 @@ import torch.nn.parallel
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
 
-from .Anynet.models.anynet import AnyNet
+from .AnyNet.models.anynet import AnyNet
 
 class AnyNetDisparity(Node):
 
@@ -49,7 +49,7 @@ class AnyNetDisparity(Node):
 
     ts.registerCallback(self.callback)
 
-  def callback(left, right):
+  def callback(self, left, right):
     try:
       limg = self.bridge.imgmsg_to_cv2(left, "rgb8");
       rimg = self.bridge.imgmsg_to_cv2(right, "rgb8");

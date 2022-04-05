@@ -17,8 +17,8 @@ setup(
     #packages=find_packages(exclude=['test']),
     packages=[
         package_name,
-        'anynet_disparity/Anynet',
-        'anynet_disparity/Anynet/models'],
+        'anynet_disparity/AnyNet',
+        'anynet_disparity/AnyNet/models'],
     data_files=[
         ('share/ament_index/resource_index/packages', 
             ['resource/' + package_name]),
