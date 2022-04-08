@@ -3,12 +3,11 @@ from rclpy.node import Node
 import message_filters
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
-
+import torch
 import easydict
 import numpy as np
 import easydict
 import torch.nn as nn
-import torch.nn.parallel
 
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
@@ -19,6 +18,8 @@ class AnyNetDisparity(Node):
 
   def __init__(self):
     super().__init__('anynet_disparity')
+
+    self.logger = self.get_logger()
 
     args = easydict.EasyDict({"init_channels": 1 , 
                       "maxdisplist": [12,3,3],  
@@ -31,6 +32,7 @@ class AnyNetDisparity(Node):
 
     self.declare_parameter('pretrained', 'config/checkpoint/kitti2015/checkpoint.tar')
     self.pretrained = self.get_parameter('pretrained').value
+    self.logger.info("pretrained model file : " + self.pretrained);
     self.add_on_set_parameters_callback(self.parameters_callback)
 
     self.model = AnyNet(args)
@@ -50,17 +52,29 @@ class AnyNetDisparity(Node):
 
   def callback(self, left, right):
     try:
-      limg = self.bridge.imgmsg_to_cv2(left, "rgb8");
-      rimg = self.bridge.imgmsg_to_cv2(right, "rgb8");
+      limg = self.bridge.imgmsg_to_cv2(left, "bgr8")
+      rimg = self.bridge.imgmsg_to_cv2(right, "bgr8")
     except CvBridgeError:
-      print(e)
+      self.logger.error("cv bridge error")
+
+    limg = limg.transpose(2,0,1)
+    rimg = rimg.transpose(2,0,1)
 
     ltensor = torch.from_numpy(limg.astype(np.float32))
     rtensor = torch.from_numpy(rimg.astype(np.float32))
+
+    ltensor = ltensor.unsqueeze(0)
+    rtensor = rtensor.unsqueeze(0)
     
     result = self.model(ltensor, rtensor)
-    result = result.cpu().numpy().astype(np.float32)
-    result = bridge.cv2_to_imgmsg(result, encoding="passthrough") 
+
+    stage_indx = 2
+    
+    result = result[stage_indx].detach().numpy().astype(np.float32)
+    result = result.squeeze(axis = 0)
+    result = result.transpose(1,2,0)
+    result = result.astype(np.uint8).copy()
+    result = self.bridge.cv2_to_imgmsg(result, encoding="mono8") 
 
     self.publisher_.publish(result)
 
@@ -70,6 +84,7 @@ class AnyNetDisparity(Node):
       if param.name == "pretrained":
         if param.type_ == Parameter.Type.STRING:
           self.pretrained = param.value
+          self.logger.info("pretrained file changed : " + self.pretrained)
           checkpoint = torch.load(self.pretrained, map_location=torch.device('cpu'))
           self.model.load_state_dict(checkpoint['state_dict'], strict=False)
     return SetParametersResult(successful=success)
