@@ -8,6 +8,7 @@ import easydict
 import numpy as np
 import easydict
 import torch.nn as nn
+import torchvision.transforms as transforms
 
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
@@ -35,6 +36,8 @@ class AnyNetDisparity(Node):
     self.logger.info("pretrained model file : " + self.pretrained);
     self.add_on_set_parameters_callback(self.parameters_callback)
 
+    self.tf = transforms.ToTensor()
+
     self.model = AnyNet(args)
     checkpoint = torch.load(self.pretrained, map_location=torch.device('cpu'))
     self.model.load_state_dict(checkpoint['state_dict'], strict=False)
@@ -50,6 +53,15 @@ class AnyNetDisparity(Node):
 
     ts.registerCallback(self.callback)
 
+  def normalize8(I):
+    mn = I.min()
+    mx = I.max()
+
+    mx -= mn
+
+    I = ((I - mn)/mx) * 255
+    return I.astype(np.uint8)
+
   def callback(self, left, right):
     try:
       limg = self.bridge.imgmsg_to_cv2(left, "bgr8")
@@ -57,22 +69,25 @@ class AnyNetDisparity(Node):
     except CvBridgeError:
       self.logger.error("cv bridge error")
 
-    limg = limg.transpose(2,0,1)
-    rimg = rimg.transpose(2,0,1)
+    # H x W x C
+    limg = cv2.cvtColor(limg, cv2.COLOR_BGR2RGB)
+    rimg = cv2.cvtColor(rimg, cv2.COLOR_BGR2RGB)
 
-    ltensor = torch.from_numpy(limg.astype(np.float32))
-    rtensor = torch.from_numpy(rimg.astype(np.float32))
+    ltensor = self.tf(limg).unsqueeze(0)
+    rtensor = self.tf(rimg).unsqueeze(0)
 
-    ltensor = ltensor.unsqueeze(0)
-    rtensor = rtensor.unsqueeze(0)
-    
+    # 1 x C x H x W
     result = self.model(ltensor, rtensor)
-
-    stage_indx = 2
     
-    result = result[stage_indx].detach().numpy().astype(np.float32)
-    result = result.squeeze(axis = 0)
-    result = result.transpose(1,2,0)
+    stage_indx = 2
+   
+    # 1 x C x H x W 
+    result = result[stage_indx].detach().numpy()
+    result = result.squeeze(0)
+    # H x W , C = 1, so removed
+    #result = result.transpose(1,2,0)
+    result = self.normalize8(result)
+    # H x W x C
     result = result.astype(np.uint8).copy()
     result = self.bridge.cv2_to_imgmsg(result, encoding="mono8") 
 
