@@ -1,8 +1,11 @@
 import rclpy
 from rclpy.node import Node
 import message_filters
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, CameraInfo
+from stereo_msg.msg import DisparityImage
 from std_msgs.msg import String
+from image_geometry import StereoCameraModel
+
 import torch
 import easydict
 import numpy as np
@@ -43,13 +46,16 @@ class AnyNetDisparity(Node):
     self.model.load_state_dict(checkpoint['state_dict'], strict=False)
 
     self.bridge = CvBridge()
+    self.camModel = StereoCameraModel()
 
     self.publisher_ = self.create_publisher(Image, "/disparity" ,10)
 
     left_rect_sub = message_filters.Subscriber(self, Image, "/left/image_rect")
     right_rect_sub = message_filters.Subscriber(self, Image, "/right/image_rect")
+    l_info_sub_ = message_filters.Subscriber(self, CameraInfo, "/left/camera_info")
+    r_info_sub_ = message_filters.Subscriber(self, CaemraInfo, "/right/camera_info")
 
-    ts = message_filters.ApproximateTimeSynchronizer([left_rect_sub, right_rect_sub], 10, 0.1, allow_headerless=True)
+    ts = message_filters.ApproximateTimeSynchronizer([left_rect_sub, l_info_sub_, right_rect_sub, r_info_sub_], 10, 0.1, allow_headerless=True)
 
     ts.registerCallback(self.callback)
 
@@ -62,12 +68,14 @@ class AnyNetDisparity(Node):
     I = ((I - mn)/mx) * 255
     return I.astype(np.uint8)
 
-  def callback(self, left, right):
+  def callback(self, left, l_info, right, r_info):
     try:
       limg = self.bridge.imgmsg_to_cv2(left, "bgr8")
       rimg = self.bridge.imgmsg_to_cv2(right, "bgr8")
     except CvBridgeError:
       self.logger.error("cv bridge error")
+
+    self.camModel.fromCameraInfo(l_info, r_info)
 
     # H x W x C
     limg = cv2.cvtColor(limg, cv2.COLOR_BGR2RGB)
@@ -83,15 +91,25 @@ class AnyNetDisparity(Node):
    
     # 1 x C x H x W 
     result = result[stage_indx].detach().numpy()
-    result = result.squeeze(0)
-    # H x W , C = 1, so removed
-    #result = result.transpose(1,2,0)
-    result = self.normalize8(result)
+    result = result.squeeze(axis = 0)
+    # C x H x W
+    result = result.transpose(1,2,0)
+    #result = self.normalize8(result)
     # H x W x C
-    result = result.astype(np.uint8).copy()
-    result = self.bridge.cv2_to_imgmsg(result, encoding="mono8") 
+    #result = result.astype(np.uint8).copy()
+    result = self.bridge.cv2_to_imgmsg(result, encoding="passthrough") 
 
-    self.publisher_.publish(result)
+    stereo_msg = DisparitImage()
+    stereo_msg.header = l_info.header
+    stereo_msg.image = result
+    stereo_msg.f = self.camModel.right().fx()
+    stereo_msg.t = self.camModel.baseline()
+    stereo_msg.min_disparity = 0
+    #AnyNet Max Disaprity = 196 at full resolution
+    stereo_msg.max_disparity = 196
+    stereo_msg.delta_d = 1
+
+    self.publisher_.publish(stereo_msg)
 
   def parameters_callback(self, params):
     success = False
