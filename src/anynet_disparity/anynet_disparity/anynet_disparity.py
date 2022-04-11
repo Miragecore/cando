@@ -2,9 +2,9 @@ import rclpy
 from rclpy.node import Node
 import message_filters
 from sensor_msgs.msg import Image, CameraInfo
-from stereo_msg.msg import DisparityImage
+from stereo_msgs.msg import DisparityImage
 from std_msgs.msg import String
-from image_geometry import StereoCameraModel
+from image_geometry import StereoCameraModel, PinholeCameraModel
 
 import torch
 import easydict
@@ -47,13 +47,15 @@ class AnyNetDisparity(Node):
 
     self.bridge = CvBridge()
     self.camModel = StereoCameraModel()
+    self.l_CamModel = PinholeCameraModel()
+    self.r_CamModel = PinholeCameraModel()
 
-    self.publisher_ = self.create_publisher(Image, "/disparity" ,10)
+    self.publisher_ = self.create_publisher(DisparityImage, "/disparity" ,10)
 
     left_rect_sub = message_filters.Subscriber(self, Image, "/left/image_rect")
     right_rect_sub = message_filters.Subscriber(self, Image, "/right/image_rect")
     l_info_sub_ = message_filters.Subscriber(self, CameraInfo, "/left/camera_info")
-    r_info_sub_ = message_filters.Subscriber(self, CaemraInfo, "/right/camera_info")
+    r_info_sub_ = message_filters.Subscriber(self, CameraInfo, "/right/camera_info")
 
     ts = message_filters.ApproximateTimeSynchronizer([left_rect_sub, l_info_sub_, right_rect_sub, r_info_sub_], 10, 0.1, allow_headerless=True)
 
@@ -75,7 +77,9 @@ class AnyNetDisparity(Node):
     except CvBridgeError:
       self.logger.error("cv bridge error")
 
-    self.camModel.fromCameraInfo(l_info, r_info)
+#self.camModel.fromCameraInfo(l_info, r_info)
+    self.l_CamModel.fromCameraInfo(l_info)
+    self.r_CamModel.fromCameraInfo(r_info)
 
     # H x W x C
     limg = cv2.cvtColor(limg, cv2.COLOR_BGR2RGB)
@@ -99,15 +103,17 @@ class AnyNetDisparity(Node):
     #result = result.astype(np.uint8).copy()
     result = self.bridge.cv2_to_imgmsg(result, encoding="passthrough") 
 
-    stereo_msg = DisparitImage()
+    stereo_msg = DisparityImage()
     stereo_msg.header = l_info.header
     stereo_msg.image = result
-    stereo_msg.f = self.camModel.right().fx()
-    stereo_msg.t = self.camModel.baseline()
-    stereo_msg.min_disparity = 0
+    stereo_msg.f = self.r_CamModel.fx()
+    # Tx() = P_(0,3)
+    # baseline = -right_.Tx() / right_.fx()
+    stereo_msg.t = -self.r_CamModel.projectionMatrix()[0,3] / self.r_CamModel.fx() 
+    stereo_msg.min_disparity = 1.0
     #AnyNet Max Disaprity = 196 at full resolution
-    stereo_msg.max_disparity = 196
-    stereo_msg.delta_d = 1
+    stereo_msg.max_disparity = 196.0
+    stereo_msg.delta_d = 1.0
 
     self.publisher_.publish(stereo_msg)
 
