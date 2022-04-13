@@ -43,7 +43,15 @@ class AnyNetDisparity(Node):
 
     self.model = AnyNet(args)
     checkpoint = torch.load(self.pretrained, map_location=torch.device('cpu'))
-    self.model.load_state_dict(checkpoint['state_dict'], strict=False)
+    from collections import OrderedDict
+    new_state_dict = OrderedDict()
+
+    for k, v in checkpoint['state_dict'].items():
+      name = k.replace("module.", "") # remove `module.`
+      new_state_dict[name] = v
+
+#self.model.load_state_dict(checkpoint['state_dict'], strict=False)
+    self.model.load_state_dict(new_state_dict, strict=False)
 
     self.bridge = CvBridge()
     self.camModel = StereoCameraModel()
