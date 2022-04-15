@@ -1,13 +1,13 @@
 # cando
 - Raspberry 4B
 - Ubuntu 20.04 / ROS2 galactic
-- StereoCcmera : Arducam 4Channel Adapeter + 8MP Rpicamera V2(2EA)
+- StereoCamera : Arducam 4Channel Adapeter + 8MP Rpicamera V2(2EA)
 - yaboom robot
 
 I planned mobile robot that moves around my home.
-It will construct with yaboom robot H/W & stereo camera.
-yaboom robot is only for moving parts that controled by I2C and other original parts of yaboom will be remove.
-stereo camera will be made by arducam's 4 Channel adapter and two 8MP raspberry camera V2 and it will produce a disprityImage based on AnyNet or RTSSnet CNN Network.
+It will construct with [yaboom robot](https://category.yahboom.net/collections/r-4-wheels-drive/products/raspbot) H/W & stereo camera.
+yaboom robot is only for moving parts that controled by I2C and one Ultrasonic sensor. other original parts of yaboom will be remove.
+stereo camera will be made by [arducam's 4 Channel multiplexer](https://www.arducam.com/product/multi-camera-v2-1-adapter-raspberry-pi/) and two [8MP raspberry camera V2](https://www.arducam.com/16mp-autofocus-camera-for-raspberry-pi/) and will make it produce a disprity Image based on AnyNet or RTSSnet CNN Network.
 after all things are built, I will try S-PTAM algorithms.
 
 # dependency
@@ -30,7 +30,7 @@ pip3 install torch torchvision torchaudio --extra-index-url https://download.pyt
 
 ## [AnyNet](https://github.com/mileyan/AnyNet)
 AnyNet is CNN network. and it's implementation is based on CUDA. 
-so, I need codes to run rasberrypi's single CPU  
+so, I modify some coded to run rasberrypi's single CPU and it added as submodule.  
 cpu version : [AnyNet](https://github.com/Miragecore/AnyNet/tree/devel)  
 Test on Colab AnyNet : [Colab Test](https://github.com/Miragecore/SandBox/blob/main/AnyNetTest-cpu.ipynb)
 
