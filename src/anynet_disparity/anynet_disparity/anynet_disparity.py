@@ -109,6 +109,11 @@ class AnyNetDisparity(Node):
     #result = self.normalize8(result)
     # H x W x C
     #result = result.astype(np.uint8).copy()
+    dmax = result.max()
+    dmin = result.min()
+    result = result - dmin;
+    self.logger.info("mx " + str(dmax) + " mn:" + str(dmin))
+	
     result = self.bridge.cv2_to_imgmsg(result, encoding="passthrough") 
 
     stereo_msg = DisparityImage()
@@ -118,10 +123,10 @@ class AnyNetDisparity(Node):
     # Tx() = P_(0,3)
     # baseline = -right_.Tx() / right_.fx()
     stereo_msg.t = -self.r_CamModel.projectionMatrix()[0,3] / self.r_CamModel.fx() 
-    stereo_msg.min_disparity = 1.0
+    stereo_msg.min_disparity = float(0)
     #AnyNet Max Disaprity = 196 at full resolution
-    stereo_msg.max_disparity = 196.0
-    stereo_msg.delta_d = 1.0
+    stereo_msg.max_disparity = float(dmax-dmin)
+    stereo_msg.delta_d = 1.0/16
 
     self.publisher_.publish(stereo_msg)
 

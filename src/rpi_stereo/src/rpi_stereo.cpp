@@ -46,7 +46,7 @@ RpiStereo::RpiStereo(const rclcpp::NodeOptions & options)
 : Node("RpiStereo", options)
 {
   rectify_ = this->declare_parameter("rectify", false);
-  publish_rate_ = this->declare_parameter("publish_rate", static_cast<double>(2));
+  publish_rate_ = this->declare_parameter("publish_rate", static_cast<double>(3));
 
   l_frame_id_ = this->declare_parameter("l_frame_id", std::string("l_camera"));
   r_frame_id_ = this->declare_parameter("r_frame_id", std::string("r_camera"));
