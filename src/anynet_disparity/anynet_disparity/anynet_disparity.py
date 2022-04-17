@@ -1,13 +1,17 @@
 import rclpy
 from rclpy.node import Node
 import message_filters
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, CameraInfo
+from stereo_msgs.msg import DisparityImage
 from std_msgs.msg import String
+from image_geometry import StereoCameraModel, PinholeCameraModel
+
 import torch
 import easydict
 import numpy as np
 import easydict
 import torch.nn as nn
+import torchvision.transforms as transforms
 
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
@@ -35,6 +39,8 @@ class AnyNetDisparity(Node):
     self.logger.info("pretrained model file : " + self.pretrained);
     self.add_on_set_parameters_callback(self.parameters_callback)
 
+    self.tf = transforms.ToTensor()
+
     self.model = AnyNet(args)
     checkpoint = torch.load(self.pretrained, map_location=torch.device('cpu'))
     from collections import OrderedDict
@@ -48,43 +54,81 @@ class AnyNetDisparity(Node):
     self.model.load_state_dict(new_state_dict, strict=False)
 
     self.bridge = CvBridge()
+    self.camModel = StereoCameraModel()
+    self.l_CamModel = PinholeCameraModel()
+    self.r_CamModel = PinholeCameraModel()
 
-    self.publisher_ = self.create_publisher(Image, "/disparity" ,10)
+    self.publisher_ = self.create_publisher(DisparityImage, "/disparity" ,10)
 
     left_rect_sub = message_filters.Subscriber(self, Image, "/left/image_rect")
     right_rect_sub = message_filters.Subscriber(self, Image, "/right/image_rect")
+    l_info_sub_ = message_filters.Subscriber(self, CameraInfo, "/left/camera_info")
+    r_info_sub_ = message_filters.Subscriber(self, CameraInfo, "/right/camera_info")
 
-    ts = message_filters.ApproximateTimeSynchronizer([left_rect_sub, right_rect_sub], 10, 0.1, allow_headerless=True)
+    ts = message_filters.ApproximateTimeSynchronizer([left_rect_sub, l_info_sub_, right_rect_sub, r_info_sub_], 10, 0.1, allow_headerless=True)
 
     ts.registerCallback(self.callback)
 
-  def callback(self, left, right):
+  def normalize8(I):
+    mn = I.min()
+    mx = I.max()
+
+    mx -= mn
+
+    I = ((I - mn)/mx) * 255
+    return I.astype(np.uint8)
+
+  def callback(self, left, l_info, right, r_info):
     try:
       limg = self.bridge.imgmsg_to_cv2(left, "bgr8")
       rimg = self.bridge.imgmsg_to_cv2(right, "bgr8")
     except CvBridgeError:
       self.logger.error("cv bridge error")
 
-    limg = limg.transpose(2,0,1)
-    rimg = rimg.transpose(2,0,1)
+#self.camModel.fromCameraInfo(l_info, r_info)
+    self.l_CamModel.fromCameraInfo(l_info)
+    self.r_CamModel.fromCameraInfo(r_info)
 
-    ltensor = torch.from_numpy(limg.astype(np.float32))
-    rtensor = torch.from_numpy(rimg.astype(np.float32))
+    # H x W x C
+    limg = cv2.cvtColor(limg, cv2.COLOR_BGR2RGB)
+    rimg = cv2.cvtColor(rimg, cv2.COLOR_BGR2RGB)
 
-    ltensor = ltensor.unsqueeze(0)
-    rtensor = rtensor.unsqueeze(0)
-    
+    ltensor = self.tf(limg).unsqueeze(0)
+    rtensor = self.tf(rimg).unsqueeze(0)
+
+    # 1 x C x H x W
     result = self.model(ltensor, rtensor)
-
-    stage_indx = 2
     
-    result = result[stage_indx].detach().numpy().astype(np.float32)
+    stage_indx = 2
+   
+    # 1 x C x H x W 
+    result = result[stage_indx].detach().numpy()
     result = result.squeeze(axis = 0)
+    # C x H x W
     result = result.transpose(1,2,0)
-    result = result.astype(np.uint8).copy()
-    result = self.bridge.cv2_to_imgmsg(result, encoding="mono8") 
+    #result = self.normalize8(result)
+    # H x W x C
+    #result = result.astype(np.uint8).copy()
+    dmax = result.max()
+    dmin = result.min()
+    result = result - dmin;
+    self.logger.info("mx " + str(dmax) + " mn:" + str(dmin))
+	
+    result = self.bridge.cv2_to_imgmsg(result, encoding="passthrough") 
 
-    self.publisher_.publish(result)
+    stereo_msg = DisparityImage()
+    stereo_msg.header = l_info.header
+    stereo_msg.image = result
+    stereo_msg.f = self.r_CamModel.fx()
+    # Tx() = P_(0,3)
+    # baseline = -right_.Tx() / right_.fx()
+    stereo_msg.t = -self.r_CamModel.projectionMatrix()[0,3] / self.r_CamModel.fx() 
+    stereo_msg.min_disparity = float(0)
+    #AnyNet Max Disaprity = 196 at full resolution
+    stereo_msg.max_disparity = float(dmax-dmin)
+    stereo_msg.delta_d = 1.0/16
+
+    self.publisher_.publish(stereo_msg)
 
   def parameters_callback(self, params):
     success = False
