@@ -13,8 +13,8 @@ after all things are built, I will try [S-PTAM](https://github.com/lrse/sptam) a
 
 # DisparityImage
 ## By AnyNet. 
-- psn : False
 ![DisparityImage](https://user-images.githubusercontent.com/1232645/163714338-fc835412-b2c7-4e0f-b2d6-88fba02233f9.jpg)
+- psn : false. 
 - `ros2 run image_view disparity_image --ros-args -r /image:=disparity`
 
 # dependency
