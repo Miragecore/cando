@@ -11,6 +11,10 @@ yaboom robot will use for moving parts that controled by I2C and one Ultrasonic 
 stereo camera will be made by [arducam's 4 Channel multiplexer](https://www.arducam.com/product/multi-camera-v2-1-adapter-raspberry-pi/) and two [8MP raspberry camera V2](https://www.arducam.com/16mp-autofocus-camera-for-raspberry-pi/) and will make it produce a disprity Image based on [AnyNet](https://github.com/mileyan/AnyNet) or [RTSSNet](https://arxiv.org/abs/1910.00541) CNN Network.
 after all things are built, I will try [S-PTAM](https://github.com/lrse/sptam) algorithms.
 
+# DisparityImage
+![DisparityImage](https://user-images.githubusercontent.com/1232645/163714338-fc835412-b2c7-4e0f-b2d6-88fba02233f9.jpg)
+- `ros2 run image_view disparity_image --ros-args -r /image:=disparity'
+
 # dependency
 
 ## opencv & boost
@@ -71,4 +75,14 @@ apt-get install -y python3-rosdep \
 git clone https://github.com/Miragecore/cando.git
 cd cando
 git submodule update --init --recursive
+colcon build
 ```
+## need root privilge
+```
+source /opt/ros/galactic/setup.sh
+#move to cloned directory
+. install/localsetup.sh
+
+ros2 launch pipeline_launch pipeline_launch.launch.py
+```
+
