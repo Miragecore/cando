@@ -2,12 +2,13 @@
 - RaspberyPi 4B
 - Ubuntu 20.04 / ROS2 galactic
 - StereoCamera : [Arducam 4Channel Adapeter](https://www.arducam.com/16mp-autofocus-camera-for-raspberry-pi/) + two [8MP Rpicamera V2](https://www.arducam.com/16mp-autofocus-camera-for-raspberry-pi/)
+[Stereo Camera](https://user-images.githubusercontent.com/1232645/163714880-7ea4e165-ec2b-46ca-b803-5fc7b47a548e.jpg)
 - [yaboom robot](https://category.yahboom.net/collections/r-4-wheels-drive/products/raspbot)
 
 I planned mobile robot that moves around my home.
 It will construct with [yaboom robot H/W](https://category.yahboom.net/collections/r-4-wheels-drive/products/raspbot) & stereo camera.
 yaboom robot will use for moving parts that controled by I2C and one Ultrasonic sensor. other original parts of yaboom will be remove.
-stereo camera will be made by [arducam's 4 Channel multiplexer](https://www.arducam.com/product/multi-camera-v2-1-adapter-raspberry-pi/) and two [8MP raspberry camera V2](https://www.arducam.com/16mp-autofocus-camera-for-raspberry-pi/) and will make it produce a disprity Image based on [AnyNet](https://github.com/lrse/sptam) or [RTSSNet](https://github.com/lrse/sptam) CNN Network.
+stereo camera will be made by [arducam's 4 Channel multiplexer](https://www.arducam.com/product/multi-camera-v2-1-adapter-raspberry-pi/) and two [8MP raspberry camera V2](https://www.arducam.com/16mp-autofocus-camera-for-raspberry-pi/) and will make it produce a disprity Image based on [AnyNet](https://github.com/mileyan/AnyNet) or [RTSSNet](https://arxiv.org/abs/1910.00541) CNN Network.
 after all things are built, I will try [S-PTAM](https://github.com/lrse/sptam) algorithms.
 
 # dependency
