@@ -2,7 +2,7 @@
 - RaspberyPi 4B
 - Ubuntu 20.04 / ROS2 galactic
 - StereoCamera : [Arducam 4Channel Adapeter](https://www.arducam.com/16mp-autofocus-camera-for-raspberry-pi/) + two [8MP Rpicamera V2](https://www.arducam.com/16mp-autofocus-camera-for-raspberry-pi/)
-[Stereo Camera](https://user-images.githubusercontent.com/1232645/163714880-7ea4e165-ec2b-46ca-b803-5fc7b47a548e.jpg)
+![Stereo Camera](https://user-images.githubusercontent.com/1232645/163714880-7ea4e165-ec2b-46ca-b803-5fc7b47a548e.jpg)
 - [yaboom robot](https://category.yahboom.net/collections/r-4-wheels-drive/products/raspbot)
 
 I planned mobile robot that moves around my home.
